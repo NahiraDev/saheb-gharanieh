@@ -25,6 +25,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # ----------------------------------------
+      # PHP
+      # ----------------------------------------
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -47,18 +51,21 @@ jobs:
             --prefer-dist \
             --no-progress
 
+      # ----------------------------------------
+      # Laravel test environment
+      # ----------------------------------------
+
       - name: Prepare Laravel environment
         run: |
           cp .env.example .env
           php artisan key:generate
+
           mkdir -p database
           touch database/database.sqlite
 
-      - name: Run Laravel tests
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: database/database.sqlite
-        run: php artisan test
+      # ----------------------------------------
+      # Node / Vite
+      # ----------------------------------------
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
@@ -76,6 +83,21 @@ jobs:
 
       - name: Build frontend assets
         run: npm run build
+
+      # ----------------------------------------
+      # Tests
+      # ----------------------------------------
+
+      - name: Run Laravel tests
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+        run: php artisan test
+
+  # ==========================================
+  # PRODUCTION DEPLOYMENT
+  # ==========================================
 
   deploy:
     name: Deploy Production
@@ -123,10 +145,15 @@ jobs:
             echo "==> Reset to origin/main"
             git reset --hard origin/main
 
-            echo "==> Verify commit"
+            echo "==> Deployed commit"
             git rev-parse --short HEAD
 
-            echo "==> Install PHP dependencies"
+            # ----------------------------------
+            # PHP dependencies
+            # ----------------------------------
+
+            echo "==> Installing PHP dependencies"
+
             composer install \
               --no-dev \
               --no-interaction \
@@ -134,27 +161,49 @@ jobs:
               --no-progress \
               --optimize-autoloader
 
-            echo "==> Install Node dependencies"
+            # ----------------------------------
+            # Node dependencies
+            # ----------------------------------
+
+            echo "==> Installing Node dependencies"
+
             npm ci
 
-            echo "==> Build production assets"
+            # ----------------------------------
+            # Frontend build
+            # ----------------------------------
+
+            echo "==> Building frontend"
+
             npm run build
 
-            echo "==> Run database migrations"
+            # ----------------------------------
+            # Laravel
+            # ----------------------------------
+
+            echo "==> Running database migrations"
+
             php artisan migrate --force
 
-            echo "==> Ensure storage symlink"
+            echo "==> Creating storage symlink"
+
             php artisan storage:link || true
 
-            echo "==> Clear Laravel caches"
+            echo "==> Clearing Laravel caches"
+
             php artisan optimize:clear
 
-            echo "==> Build Laravel production cache"
+            echo "==> Optimizing Laravel"
+
             php artisan optimize
+
+            # ----------------------------------
+            # Finished
+            # ----------------------------------
 
             echo "========================================"
             echo "Deployment completed successfully"
             echo "========================================"
 
-            echo "==> Deployed commit:"
+            echo "Final commit:"
             git rev-parse HEAD
