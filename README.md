@@ -151,10 +151,10 @@ admin markup.
 The panel's own defences are in place — a single generic message for both a wrong username
 and a wrong password, `session()->regenerate()` on sign-in, invalidate plus token-regenerate
 on sign-out, `throttle:10,1` on the login POST, the current password required before a new
-one, bcrypt at 12 rounds, server-side `image|mimes:…|max:6144` on uploads with Laravel
+one, bcrypt at 12 rounds, server-side `image|mimes:…|max:…` on uploads with Laravel
 generating the stored filename, and CSRF on every form.
 
-What is left is configuration, and all three matter:
+What is left is configuration, and all four matter:
 
 1. **`APP_ENV=production`, `APP_DEBUG=false`.** The checked-in `.env` is a development file
    (`local` / `true`), which is right for a laptop and wrong for a public host: with debug on,
@@ -166,6 +166,33 @@ What is left is configuration, and all three matter:
    crosses the café's shared Wi-Fi in the clear, which is the realistic attack on a site that
    takes no payments — someone on the same network reading the cookie and walking into the
    panel.
+4. **Upload limits, if the web server is nginx.** `client_max_body_size` defaults to **1M** and
+   answers 413 by itself, before PHP is reached — so a normal phone photo never arrives no
+   matter what the panel or php.ini say. `client_max_body_size 12M;` in the server block, to
+   match `post_max_size` in `public/.user.ini`; and `location ~ /\.user\.ini { deny all; }`,
+   since that file sits in the web root and nginx will otherwise serve it. Apache needs
+   neither: `public/.htaccess` sets the limits for mod_php and denies the file already.
+
+### How large a photo may be
+
+One number, in `App\Support\UploadLimit::WANTED_KILOBYTES` (6144). The image field's hint, the
+`max:` rule on `ProductRequest` and the check in `admin.js` all read it from there, clamped
+down to whatever `upload_max_filesize` and `post_max_size` will really accept — so the panel
+cannot advertise a size the server then refuses, which is exactly what it used to do.
+
+The clamp means a misconfigured server shows an honest smaller number rather than failing:
+if the hint reads less than «۶ مگابایت», PHP is the reason, not the code. `public/.user.ini`
+(8M / 12M) lifts it for php-fpm, `public/.htaccess` for mod_php, and nginx needs the item
+above. `php artisan serve` reads neither — its limits come from the CLI `php.ini`:
+
+```bash
+php -i | grep -E 'upload_max_filesize|post_max_size'
+```
+
+Both ceilings sit deliberately **above** 6 MB. A 7 MB photo is then refused by Laravel, with a
+message naming the real limit, instead of arriving broken from PHP; and a body over
+`post_max_size` is discarded whole — token and text fields with it — which is why that one has
+the most headroom and why `resources/views/errors/413.blade.php` exists as the last resort.
 
 Also worth knowing: the `/wp-admin` prefix attracts constant WordPress-scanner traffic. The
 throttle makes it harmless, but it will fill the logs, so do not read a stream of failed

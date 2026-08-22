@@ -260,6 +260,11 @@ document.querySelectorAll('[data-glyph-picker]').forEach((picker) => {
  * clearing has to put the flag back — otherwise the upload would arrive with an
  * instruction to delete it.
  *
+ * Size is checked here as well as on the server. Not for safety — the server
+ * decides — but because the alternative is uploading several megabytes over a
+ * café's connection to be told no, and because a photo over post_max_size is
+ * thrown away by PHP before Laravel can answer with anything useful.
+ *
  * @param {HTMLElement} field the [data-image-field] wrapper
  */
 function initImageField(field) {
@@ -272,6 +277,10 @@ function initImageField(field) {
     const empty = field.querySelector('[data-image-empty]');
     const clearButton = field.querySelector('[data-image-clear]');
     const pickLabel = field.querySelector('[data-image-pick-label]');
+    const errorText = field.querySelector('[data-image-error]');
+
+    const maxBytes = Number(field.dataset.imageMaxBytes) || 0;
+    const maxLabel = field.dataset.imageMaxLabel ?? '';
 
     let objectUrl = null;
 
@@ -282,13 +291,33 @@ function initImageField(field) {
         objectUrl = null;
     }
 
+    /** Blank message clears the field; the server's own message arrives rendered. */
+    function complain(message) {
+        field.classList.toggle('admin-image--bad', Boolean(message));
+
+        if (!errorText) return;
+        errorText.textContent = message;
+        errorText.hidden = !message;
+    }
+
     input.addEventListener('change', () => {
         const file = input.files?.[0];
 
         revoke();
+        complain('');
 
         if (!file) {
             preview.hidden = true;
+            return;
+        }
+
+        if (maxBytes && file.size > maxBytes) {
+            // Drop the file rather than leave it staged: the owner should not be
+            // able to submit a form whose photo is already known to be refused.
+            input.value = '';
+            preview.hidden = true;
+            preview.removeAttribute('src');
+            complain(`حجم این تصویر بیشتر از ${maxLabel} مگابایت است. عکس کوچک‌تری انتخاب کنید.`);
             return;
         }
 
@@ -304,6 +333,7 @@ function initImageField(field) {
 
     clearButton?.addEventListener('click', () => {
         revoke();
+        complain('');
 
         input.value = '';
         preview.hidden = true;

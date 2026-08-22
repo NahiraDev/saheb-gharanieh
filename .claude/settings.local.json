@@ -49,7 +49,19 @@
       "Bash(node tools/shot.mjs --url=http://127.0.0.1:8321/ --out=- --width=390 --height=844 '--eval=\\(async \\(\\) => { *)",
       "Bash(node tools/shot.mjs --url=http://127.0.0.1:8321/ --out=/tmp/qa2/preloader-light-390.png --width=390 --height=844 '--eval=\\(async \\(\\) => { *)",
       "Bash(node tools/shot.mjs --url=http://127.0.0.1:8321/ --out=/tmp/qa2/home-dark-1280.png --width=1280 --height=900 --reveal)",
-      "Bash(perl -0pi -e 's/\\\\{\\\\{ \\\\\\\\App\\\\\\\\Support\\\\\\\\Persian::digits\\\\\\(\\(\\\\$[^\\)]*?\\)\\\\\\) \\\\}\\\\}/\\\\@fa\\($1\\)/g' resources/views/admin/dashboard.blade.php)"
+      "Bash(perl -0pi -e 's/\\\\{\\\\{ \\\\\\\\App\\\\\\\\Support\\\\\\\\Persian::digits\\\\\\(\\(\\\\$[^\\)]*?\\)\\\\\\) \\\\}\\\\}/\\\\@fa\\($1\\)/g' resources/views/admin/dashboard.blade.php)",
+      "Bash(php -i)",
+      "Bash(php --ini)",
+      "Read(//etc/apache2/sites-enabled/**)",
+      "Bash(sed -n '/\"scripts\"/,/^ }/p' /home/rxm1x/projects/sahebgharanie/composer.json)",
+      "Bash(apache2ctl -M)",
+      "Read(//etc/php/**)",
+      "Bash(sed -n '/require-dev/,/}/p' /home/rxm1x/projects/sahebgharanie/composer.json)",
+      "Bash(sudo -n true)",
+      "Bash(git check-ignore *)",
+      "Bash(grep -iE \"^\\(gd|exif|fileinfo\\)$\")",
+      "Bash(vendor/bin/pint --test)",
+      "Bash(cat *)"
     ]
   }
 }

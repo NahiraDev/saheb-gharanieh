@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Support\Glyph;
 use App\Support\Persian;
+use App\Support\UploadLimit;
 use Illuminate\Validation\Rule;
 
 /** Add and edit a menu item. */
@@ -25,8 +26,26 @@ class ProductRequest extends AdminRequest
             'is_active' => ['boolean'],
             'is_available' => ['boolean'],
             'is_featured' => ['boolean'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:6144'],
+            // The cap comes from UploadLimit rather than a literal: a rule PHP
+            // cannot honour is a rule that fails with the wrong message.
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:'.UploadLimit::kilobytes()],
             'remove_image' => ['boolean'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        $megabytes = UploadLimit::megabytesLabel();
+
+        return [
+            ...parent::messages(),
+            // The shared messages count kilobytes, which is not how anyone thinks
+            // about a photo off a phone.
+            'image.max' => "حجم تصویر نمی‌تواند بیشتر از {$megabytes} مگابایت باشد.",
+            'image.uploaded' => "تصویر بارگذاری نشد — حجم آن از {$megabytes} مگابایت بیشتر است.",
         ];
     }
 

@@ -44,6 +44,7 @@
     .admin-confirm[hidden],
     .admin-image-preview[hidden],
     .admin-image-empty[hidden],
+    .admin-image-error[hidden],
     .admin-toast[hidden] {
         display: none;
     }
@@ -1153,6 +1154,11 @@
         border: 1px solid var(--admin-edge-soft);
         border-radius: var(--radius-card);
         background: var(--admin-sunk);
+    }
+
+    /* Matches .admin-field--bad, which this field cannot use: it is not one. */
+    .admin-image--bad .admin-image-frame {
+        border-color: rgba(214, 106, 90, 0.7);
     }
 
     .admin-image-preview,

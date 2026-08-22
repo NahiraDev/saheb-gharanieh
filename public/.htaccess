@@ -1,3 +1,21 @@
+# Upload limits, for Apache with mod_php only. The IfModule guard matters: with
+# php-fpm these directives are unknown and Apache answers every request with 500.
+# The FastCGI SAPIs read public/.user.ini instead, which carries the same numbers
+# and the reasoning behind them.
+<IfModule mod_php.c>
+    php_value upload_max_filesize 8M
+    php_value post_max_size 12M
+</IfModule>
+
+# .user.ini is a dotfile in a public directory, and Apache's stock config only
+# hides .ht* — so without this it can simply be fetched. Nothing in it is secret,
+# but nothing in it is anyone's business either.
+<IfModule mod_authz_core.c>
+    <FilesMatch "^\.user\.ini$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

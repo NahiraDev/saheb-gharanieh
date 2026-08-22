@@ -38,6 +38,10 @@ abstract class AdminRequest extends FormRequest
             'alpha_dash' => '«:attribute» فقط می‌تواند حرف، عدد، خط تیره و زیرخط داشته باشد.',
             'image' => '«:attribute» باید یک تصویر باشد.',
             'mimes' => 'فرمت «:attribute» باید یکی از این‌ها باشد: :values',
+            // PHP's own doing: when an upload overruns upload_max_filesize the file
+            // arrives broken, and Laravel reports this rule instead of `max`. Left
+            // untranslated it reads as English in the middle of a Persian form.
+            'uploaded' => 'بارگذاری «:attribute» کامل نشد — حجم فایل از حد مجاز سرور بیشتر است.',
             'max.string' => '«:attribute» نمی‌تواند بیشتر از :max نویسه باشد.',
             'max.numeric' => '«:attribute» نمی‌تواند بیشتر از :max باشد.',
             'max.file' => 'حجم «:attribute» نمی‌تواند بیشتر از :max کیلوبایت باشد.',

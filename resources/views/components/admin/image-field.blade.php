@@ -5,9 +5,18 @@
      photo and saving the rest of the form should be one action, not two. --}}
 @props(['product'])
 
-@php $existing = $product->imageUrl(); @endphp
+@php
+    $existing = $product->imageUrl();
+    $error = $errors->first('image');
+    $megabytes = \App\Support\UploadLimit::megabytesLabel();
+@endphp
 
-<div class="admin-image" data-image-field>
+{{-- The size cap is written into the markup so admin.js can turn a photo away
+     before the upload starts, rather than after a slow round trip. --}}
+<div @class(['admin-image', 'admin-image--bad' => filled($error)])
+     data-image-field
+     data-image-max-bytes="{{ \App\Support\UploadLimit::bytes() }}"
+     data-image-max-label="{{ $megabytes }}">
     <input type="hidden" name="remove_image" value="0" data-image-remove-flag>
 
     <div class="admin-image-frame" data-image-frame>
@@ -39,5 +48,9 @@
         </button>
     </div>
 
-    <p class="admin-hint">JPG، PNG، WEBP یا AVIF — تا ۶ مگابایت. تصویر مربعی بهترین نتیجه را می‌دهد.</p>
+    {{-- This field is not wrapped in x-admin.field, so it has to show its own
+         message: without this the photo was refused in silence. --}}
+    <p class="admin-error admin-image-error" data-image-error @unless ($error) hidden @endunless>{{ $error }}</p>
+
+    <p class="admin-hint">JPG، PNG، WEBP یا AVIF — تا {{ $megabytes }} مگابایت. تصویر مربعی بهترین نتیجه را می‌دهد.</p>
 </div>
