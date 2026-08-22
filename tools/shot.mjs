@@ -5,6 +5,10 @@
  *
  *   node tools/shot.mjs <url> <out.png> [width] [height] [--full] [--eval=<js>]
  *   node tools/shot.mjs --url=… --out=… [--width=390] [--height=844] [--full] …
+ *
+ * `--login=admin:admin123` signs into /wp-admin first, so the panel's pages can
+ * be captured: the browser profile is fresh every run and the session cookie is
+ * httpOnly, so there is no other way to arrive at one logged in.
  */
 import { spawn } from 'node:child_process';
 import { writeFileSync, mkdtempSync, mkdirSync } from 'node:fs';
@@ -98,6 +102,30 @@ await call('Emulation.setDeviceMetricsOverride', {
     positionY: 0,
 });
 await call('Emulation.setTouchEmulationEnabled', { enabled: true });
+
+// Sign in before the page we actually want, when asked. The form is filled and
+// submitted in the page so it carries the CSRF token that was printed into it.
+const login = flag('login');
+
+if (login) {
+    const [username, password] = login.split(':');
+
+    await call('Page.navigate', { url: `${new URL(url).origin}/wp-admin/login` });
+    await sleep(1800);
+
+    await call('Runtime.evaluate', {
+        expression: `(() => {
+            const form = document.querySelector('.admin-login-form');
+            if (!form) return 'no form';
+            form.querySelector('[name=username]').value = ${JSON.stringify(username)};
+            form.querySelector('[name=password]').value = ${JSON.stringify(password)};
+            form.submit();
+            return 'submitted';
+        })()`,
+        returnByValue: true,
+    });
+    await sleep(2200);
+}
 
 await call('Page.navigate', { url });
 await sleep(2500);

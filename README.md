@@ -105,19 +105,74 @@ locks those counts in.
 
 ---
 
-## Adding an admin panel later
+## The café panel
 
-The data layer is already shaped for one:
+Everything the owner edits lives under **`/wp-admin`**, behind its own `admin` auth guard
+(`admin_users` table) — completely separate from the site's `web` guard. Default login from
+`AdminUserSeeder` is `admin` / `admin123`; **change it before going live** (see
+[Deploy](#deploy)).
 
-- Models are plain Eloquent with `$fillable`, enum casts, `active`/`ordered`/`onLanding`
-  scopes and factories — usable as-is by Filament, Nova, Livewire or hand-written CRUD.
-- `Category::getRouteKeyName()` is `slug`, and slugs are generated on save when blank.
-- Prices are `unsignedBigInteger` Tomans (no decimals) and always nullable.
-- `image_path` is resolved through `Product::imageUrl()`, which understands both a full URL
-  and a path on the `public` disk — so uploads only need `php artisan storage:link`.
-- Site copy lives in `settings` rather than in Blade, so it is editable without a deploy.
+| Page | What it does |
+| --- | --- |
+| `/wp-admin` | Dashboard: counts, the four things most likely to need attention, recent items |
+| `/wp-admin/items` | Menu items — search, filter by section/status, bulk actions, inline price editing, ↑/↓ ordering |
+| `/wp-admin/items/create`, `…/{id}/edit` | Full item form, including image upload and glyph picker |
+| `/wp-admin/categories` | Sections — drag to reorder, toggle, and manage the extras strip inline |
+| `/wp-admin/categories/create`, `…/{id}/edit` | Section form: copy, kind, layout, service price, landing-page card |
+| `/wp-admin/settings` | The `settings` rows — café intro, hours, address, Instagram |
+| `/wp-admin/account` | Rename the account and change the password |
 
-A panel therefore needs CRUD over four tables and nothing else; no view changes.
+Two rules the panel is built on:
+
+- **Every page works without JavaScript.** The whole panel is real forms that post and
+  reload. `resources/js/admin.js` only adds convenience: the confirm dialog, self-submitting
+  filters, drag-to-reorder, image preview, the bulk bar, saving a price on blur. With JS off
+  the filter form keeps its «اعمال» button, the ↑/↓ buttons still reorder, and a delete still
+  deletes — it just is not questioned first.
+- **Authorisation is the route's job.** `AdminRequest::authorize()` returns `true` for all
+  eight form requests, because `Route::middleware('auth:admin')` in `routes/web.php` wraps
+  every route but the login form. `tests/Feature/AdminAuthTest.php` walks the route table and
+  asserts a guest is turned away from each one, so a route added outside that group fails the
+  suite instead of shipping open.
+
+Sections and items bind on `id` in the panel (`{category:id}`) rather than on `slug`, because
+the panel is where a slug gets renamed and a model must not disappear from under the form
+that is editing it.
+
+`resources/css/admin.css` styles the panel and deliberately does **not** import Tailwind: it
+is loaded next to `app.css`, whose `@theme` tokens, `@utility` rules (`gold-text`,
+`gold-line`, `latin`) and `.frame` it reuses, and whose `@source '../views'` already scans the
+admin markup.
+
+---
+
+## Deploy
+
+The panel's own defences are in place — a single generic message for both a wrong username
+and a wrong password, `session()->regenerate()` on sign-in, invalidate plus token-regenerate
+on sign-out, `throttle:10,1` on the login POST, the current password required before a new
+one, bcrypt at 12 rounds, server-side `image|mimes:…|max:6144` on uploads with Laravel
+generating the stored filename, and CSRF on every form.
+
+What is left is configuration, and all three matter:
+
+1. **`APP_ENV=production`, `APP_DEBUG=false`.** The checked-in `.env` is a development file
+   (`local` / `true`), which is right for a laptop and wrong for a public host: with debug on,
+   any error becomes a full-disclosure page listing file paths, source lines and environment
+   values.
+2. **Change `admin` / `admin123`.** From the account page, or
+   `php artisan admin:password admin` on the server.
+3. **HTTPS, and `SESSION_SECURE_COOKIE=true`.** Over plain HTTP the admin session cookie
+   crosses the café's shared Wi-Fi in the clear, which is the realistic attack on a site that
+   takes no payments — someone on the same network reading the cookie and walking into the
+   panel.
+
+Also worth knowing: the `/wp-admin` prefix attracts constant WordPress-scanner traffic. The
+throttle makes it harmless, but it will fill the logs, so do not read a stream of failed
+logins as a targeted attempt.
+
+Never commit `.env` (it holds `APP_KEY`) or `database/database.sqlite` (it holds the admin
+password hash). Move the database between machines out of band — `scp`, not `git`.
 
 ---
 
@@ -135,6 +190,9 @@ A panel therefore needs CRUD over four tables and nothing else; no view changes.
   (see `App\Support\Persian` and `AppServiceProvider`).
 - Vanilla JS only: theme switch, preloader, IntersectionObserver reveals, image fade-in,
   scroll spy, back-to-top. `prefers-reduced-motion` is respected.
+- Four Vite entries: `app.css` / `app.js` for the menu, `admin.css` / `admin.js` for the
+  panel. `php artisan test` leaves Vite switched on, so an entry missing from
+  `public/build/manifest.json` fails the suite rather than 500-ing in production.
 
 ### Screenshots during development
 
