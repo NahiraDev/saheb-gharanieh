@@ -63,8 +63,12 @@ class Product extends Model
     }
 
     /**
-     * Public URL for the product photo, or null when none has been uploaded yet
-     * (the Blade card then renders the ornate empty placeholder).
+     * Public URL for the product photo.
+     *
+     * Stored values are normally relative paths such as products/foo.png, but
+     * older/imported records may already contain /storage/ or a full URL.
+     * Normalize those forms so the rendered menu always points at the same
+     * public storage endpoint.
      */
     public function imageUrl(): ?string
     {
@@ -72,11 +76,16 @@ class Product extends Model
             return null;
         }
 
-        if (str_starts_with($this->image_path, 'http')) {
-            return $this->image_path;
+        $path = trim((string) $this->image_path);
+
+        if (str_starts_with($path, ['http://', 'https://', '//'])) {
+            return $path;
         }
 
-        return Storage::disk('public')->url($this->image_path);
+        $path = preg_replace('#^(?:/)?storage/#', '', $path) ?? $path;
+        $path = ltrim($path, '/');
+
+        return Storage::disk('public')->url($path);
     }
 
     public function hasPrice(): bool
