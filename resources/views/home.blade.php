@@ -31,17 +31,5 @@
                 مشاهده منوی کامل
             </a>
         </div>
-
-        @if ($intro = $settings['intro'] ?? null)
-            <footer class="menu-footer">
-                <p>{{ $intro }}</p>
-                @if ($hours = $settings['working_hours'] ?? null)
-                    <p>{{ $hours }}</p>
-                @endif
-                @if ($address = $settings['address'] ?? null)
-                    <p>{{ $address }}</p>
-                @endif
-            </footer>
-        @endif
     </main>
 </x-layouts.app>
