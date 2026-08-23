@@ -9,17 +9,13 @@
                         <span class="menu-brand__latin">Saheb Gharaniyeh Cafe</span>
                     </span>
                 </a>
-
-                <span class="menu-brand__meta">
-                    <span class="menu-brand__status" aria-hidden="true"></span>
-                    منوی امروز
-                </span>
+                <span class="menu-brand__meta"><span class="menu-brand__status" aria-hidden="true"></span>منوی امروز</span>
             </div>
 
             <div class="menu-intro">
                 <p class="menu-intro__eyebrow">به صاحبقرانیه خوش آمدید</p>
                 <h1>منوی کافه</h1>
-                <p>انتخاب کنید، مقایسه کنید و با خیال راحت سفارش دهید.</p>
+                <p>نوشیدنی‌ها و انتخاب‌های صاحبقرانیه</p>
                 <hr class="menu-rule">
             </div>
 
@@ -39,29 +35,18 @@
         </header>
 
         <main class="menu-shell" id="menu-root" data-initial-section="{{ $activeSection }}">
-            <section id="menu-all" class="menu-section" aria-labelledby="menu-all-title">
-                <div class="menu-section__heading">
-                    <div class="menu-section__title-wrap">
-                        <p class="menu-section__eyebrow">انتخاب‌های صاحبقرانیه</p>
-                        <h2 class="menu-section__title" id="menu-all-title">همه آیتم‌ها</h2>
-                    </div>
-                    <span class="menu-section__count">{{ $categories->sum(fn ($category) => $category->activeProducts->count()) }} آیتم</span>
-                </div>
-            </section>
-
             @forelse ($categories as $category)
                 <section id="{{ $category->slug }}"
                          class="menu-section"
                          data-section="{{ $category->slug }}"
                          data-section-name="{{ $category->name }}"
                          aria-labelledby="heading-{{ $category->slug }}">
-
                     <div class="menu-section__heading">
                         <div class="menu-section__title-wrap">
-                            <p class="menu-section__eyebrow">{{ $category->subtitle ?? 'کافه صاحبقرانیه' }}</p>
-                            <h2 class="menu-section__title" id="heading-{{ $category->slug }}">
-                                {{ $category->name }}
-                            </h2>
+                            @if ($category->subtitle)
+                                <p class="menu-section__eyebrow">{{ $category->subtitle }}</p>
+                            @endif
+                            <h2 class="menu-section__title" id="heading-{{ $category->slug }}">{{ $category->name }}</h2>
                             @if ($category->latin_name)
                                 <p class="menu-section__latin">{{ $category->latin_name }}</p>
                             @endif
@@ -70,17 +55,11 @@
                     </div>
 
                     @if ($category->description)
-                        <p class="menu-product__description" style="margin-bottom:12px">{{ $category->description }}</p>
+                        <p class="menu-section__description">{{ $category->description }}</p>
                     @endif
 
                     @if ($category->activeProducts->isEmpty())
                         <p class="menu-empty">این بخش به‌زودی تکمیل می‌شود.</p>
-                    @elseif ($category->usesGrid())
-                        <div class="menu-items">
-                            @foreach ($category->activeProducts as $product)
-                                <x-product-card :product="$product" :category="$category" :index="$loop->iteration" />
-                            @endforeach
-                        </div>
                     @else
                         <div class="menu-items">
                             @foreach ($category->activeProducts as $product)
@@ -88,24 +67,26 @@
                             @endforeach
                         </div>
 
-                        <div class="menu-service">
-                            <span class="menu-service__label">{{ $category->price_note ?? 'قیمت سرویس' }}</span>
-                            @if ($category->price)
-                                <span class="menu-service__price">@price($category->price)</span>
-                            @else
-                                <span class="menu-service__label">در محل از پرسنل بپرسید</span>
-                            @endif
-                        </div>
-
-                        @if ($category->features->isNotEmpty())
-                            <div class="menu-features" aria-label="همراه سرویس">
-                                @foreach ($category->features as $feature)
-                                    <span class="menu-feature">
-                                        <x-icon.glyph :name="$feature->glyph" class="h-3.5 w-3.5" />
-                                        {{ $feature->name }}
-                                    </span>
-                                @endforeach
+                        @if (!$category->usesGrid())
+                            <div class="menu-service">
+                                <span class="menu-service__label">{{ $category->price_note ?? 'قیمت سرویس' }}</span>
+                                @if ($category->price)
+                                    <span class="menu-service__price">@price($category->price)</span>
+                                @else
+                                    <span class="menu-service__label">در محل از پرسنل بپرسید</span>
+                                @endif
                             </div>
+
+                            @if ($category->features->isNotEmpty())
+                                <div class="menu-features" aria-label="همراه سرویس">
+                                    @foreach ($category->features as $feature)
+                                        <span class="menu-feature">
+                                            <x-icon.glyph :name="$feature->glyph" class="h-3.5 w-3.5" />
+                                            {{ $feature->name }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
                         @endif
                     @endif
                 </section>
