@@ -7,7 +7,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#050404">
+    <meta name="theme-color" content="#0D1126">
     <meta name="robots" content="noindex, nofollow">
 
     <title>{{ $title ? $title.' | پنل کافه' : 'پنل کافه صاحبقرانیه' }}</title>
@@ -16,7 +16,7 @@
           crossorigin>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
 
-    @vite(['resources/css/app.css', 'resources/css/admin.css', 'resources/js/admin.js'])
+    @vite(['resources/css/app.css', 'resources/css/admin.css', 'resources/css/brand.css', 'resources/js/admin.js'])
 </head>
 <body class="admin-body">
     <a href="#admin-main" class="admin-skip">رفتن به محتوا</a>
