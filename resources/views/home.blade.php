@@ -9,27 +9,22 @@
 
         <section class="menu-home__categories" aria-labelledby="menu-home-heading">
             <h2 id="menu-home-heading" class="sr-only">دسته‌بندی‌های منو</h2>
-
             @foreach ($cards as $card)
                 <a href="{{ route('menu.section', $card->slug) }}#{{ $card->slug }}" class="menu-home__category">
                     <x-icon.section :category="$card" class="menu-home__category-icon" />
-
                     <span class="menu-home__category-title">
                         {{ $card->cardTitle() }}
                         @if ($card->card_subtitle)
                             <span class="menu-home__category-subtitle">{{ $card->card_subtitle }}</span>
                         @endif
                     </span>
-
                     <x-icon.chevron dir="start" class="menu-home__arrow h-4 w-4" />
                 </a>
             @endforeach
         </section>
 
-        <div class="mt-5 text-center">
-            <a href="{{ route('menu') }}" class="menu-category-link" style="display:inline-flex">
-                مشاهده منوی کامل
-            </a>
+        <div class="menu-home__all">
+            <a href="{{ route('menu') }}">مشاهده منوی کامل</a>
         </div>
     </main>
 </x-layouts.app>
