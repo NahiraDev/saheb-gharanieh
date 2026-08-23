@@ -78,7 +78,11 @@ class Product extends Model
 
         $path = trim((string) $this->image_path);
 
-        if (str_starts_with($path, ['http://', 'https://', '//'])) {
+        if (
+            str_starts_with($path, 'http://')
+            || str_starts_with($path, 'https://')
+            || str_starts_with($path, '//')
+        ) {
             return $path;
         }
 
