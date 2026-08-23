@@ -17,9 +17,20 @@
             <div class="menu-home__category-grid">
                 @foreach ($cards as $card)
                     @php
-                        $categoryImage = $card->image_path
-                            ? (str_starts_with($card->image_path, 'http') ? $card->image_path : \Illuminate\Support\Facades\Storage::disk('public')->url($card->image_path))
-                            : null;
+                        $categoryImage = null;
+                        if (filled($card->image_path)) {
+                            $path = trim((string) $card->image_path);
+                            if (
+                                str_starts_with($path, 'http://')
+                                || str_starts_with($path, 'https://')
+                                || str_starts_with($path, '//')
+                            ) {
+                                $categoryImage = $path;
+                            } else {
+                                $path = preg_replace('#^(?:/)?storage/#', '', $path) ?? $path;
+                                $categoryImage = \Illuminate\Support\Facades\Storage::disk('public')->url(ltrim($path, '/'));
+                            }
+                        }
                     @endphp
                     <a href="{{ route('menu.section', $card->slug) }}#{{ $card->slug }}" class="menu-home__category">
                         @if ($categoryImage)
