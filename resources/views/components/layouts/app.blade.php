@@ -30,7 +30,7 @@
           crossorigin>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
 
-    @vite(['resources/css/app.css', 'resources/css/brand.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/css/brand.css', 'resources/css/theme-overrides.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-dvh antialiased">
     {{-- Loading veil: emblem inside spinning brand rings, lifted on window load. --}}
