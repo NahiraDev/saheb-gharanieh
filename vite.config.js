@@ -9,6 +9,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/css/admin.css',
                 'resources/css/brand.css',
+                'resources/css/theme-overrides.css',
                 'resources/js/app.js',
                 'resources/js/admin.js',
             ],
