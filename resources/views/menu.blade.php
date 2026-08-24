@@ -1,139 +1,149 @@
-<x-layouts.app title="منو">
-    {{-- ─── Sticky bar: café mark, live section flag, chip nav, progress ──── --}}
-    <div class="topbar" id="topbar" data-scrolled="false">
-        <div class="mx-auto w-full max-w-3xl px-3 sm:px-6">
-            {{-- pr-* keeps the café mark clear of the fixed theme switch in the corner. --}}
-            <div class="flex items-center justify-between gap-2 pt-2.5 pb-2 pr-11 sm:pr-12">
-                <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-1.5" aria-label="صفحه اصلی">
-                    <x-emblem class="h-6 w-10 text-gold-400" />
-                    <span class="text-xs font-bold text-gold-100 sm:text-sm">کافه صاحبقرانیه</span>
-                </a>
+@php
+    $cafeName = $settings['cafe_name'] ?? 'کافه صاحبقرانیه';
+    $cafeLatin = $settings['cafe_name_latin'] ?? 'Saheb Gharaniyeh Cafe';
+    $tagline = $settings['tagline'] ?? null;
+    $address = $settings['address'] ?? null;
+    $phone = $settings['phone'] ?? null;
+    $hours = $settings['working_hours'] ?? null;
+    $instagram = $settings['instagram'] ?? null;
+@endphp
 
-                {{-- Always reflects the section currently in view. --}}
+<x-layouts.app title="منو" :meta-description="$settings['intro'] ?? null">
+    <div id="qr-menu-page" dir="rtl">
+        <header class="qr-menu-header">
+            <x-emblem class="qr-menu-mark" />
+            <h1 class="qr-menu-title">{{ $cafeName }}</h1>
+            <p class="qr-menu-latin" dir="ltr">{{ $cafeLatin }}</p>
+
+            @if ($tagline)
+                <p class="qr-menu-tagline">{{ $tagline }}</p>
+            @endif
+            @if ($address)
+                <p class="qr-menu-address mt-1">{{ $address }}</p>
+            @endif
+            @if ($phone)
+                <a class="qr-menu-phone" href="tel:{{ preg_replace('/\s+/', '', $phone) }}" dir="ltr">{{ $phone }}</a>
+            @endif
+        </header>
+
+        @if ($hours || $instagram || $address)
+            <details class="qr-info">
+                <summary>
+                    <span>اطلاعات کافه</span>
+                    <span aria-hidden>⌄</span>
+                </summary>
+                <div class="qr-info__body space-y-3">
+                    @if ($hours)
+                        <div>
+                            <strong class="block mb-1 text-xs text-stone-800">ساعات کاری</strong>
+                            <p>{{ $hours }}</p>
+                        </div>
+                    @endif
+                    @if ($address)
+                        <div>
+                            <strong class="block mb-1 text-xs text-stone-800">نشانی</strong>
+                            <p>{{ $address }}</p>
+                        </div>
+                    @endif
+                    @if ($instagram)
+                        <a href="https://instagram.com/{{ ltrim($instagram, '@') }}" target="_blank" rel="noreferrer"
+                           class="inline-flex rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700">
+                            اینستاگرام
+                        </a>
+                    @endif
+                </div>
+            </details>
+        @endif
+
+        <div class="qr-topbar topbar" id="topbar" data-scrolled="false">
+            <div class="qr-topbar__inner">
                 <p class="section-flag" id="section-flag" aria-live="polite">
-                    <span class="flag-dot"></span>
-                    <span class="section-flag-text gold-text" id="section-flag-text">
-                        {{ $categories->firstWhere('slug', $activeSection)?->name ?? $categories->first()?->name }}
+                    <span class="flag-dot" aria-hidden="true"></span>
+                    <span class="section-flag-text" id="section-flag-text">
+                        {{ $categories->firstWhere('slug', $activeSection)?->shortName() ?? $categories->first()?->shortName() }}
                     </span>
                 </p>
-            </div>
 
-            <nav class="chips pb-2" id="section-chips" aria-label="بخش‌های منو">
-                @foreach ($categories as $category)
-                    <a href="#{{ $category->slug }}"
-                       class="chip"
-                       data-chip="{{ $category->slug }}"
-                       aria-current="{{ $loop->first ? 'true' : 'false' }}">
-                        @if ($category->glyph)
-                            <x-icon.glyph :name="$category->glyph" class="chip-glyph" />
-                        @endif
-                        {{ $category->shortName() }}
-                    </a>
-                @endforeach
-            </nav>
+                <nav class="chips" id="section-chips" aria-label="دسته‌بندی‌های منو">
+                    @foreach ($categories as $category)
+                        <a href="#{{ $category->slug }}"
+                           class="chip"
+                           data-chip="{{ $category->slug }}"
+                           aria-current="{{ ($activeSection ? $activeSection === $category->slug : $loop->first) ? 'true' : 'false' }}">
+                            @if ($category->glyph)
+                                <x-icon.glyph :name="$category->glyph" class="chip-glyph" />
+                            @endif
+                            {{ $category->shortName() }}
+                        </a>
+                    @endforeach
+                </nav>
+            </div>
+            <span class="topbar-progress" id="topbar-progress" aria-hidden="true"></span>
         </div>
 
-        <span class="topbar-progress" id="topbar-progress" aria-hidden="true"></span>
-    </div>
+        <main class="qr-menu-main" id="menu-root" data-initial-section="{{ $activeSection }}">
+            @forelse ($categories as $category)
+                <section id="{{ $category->slug }}"
+                         class="qr-section scroll-section"
+                         data-section="{{ $category->slug }}"
+                         data-section-name="{{ $category->shortName() }}"
+                         aria-labelledby="heading-{{ $category->slug }}">
 
-    <main class="mx-auto w-full max-w-3xl px-2.5 pb-6 pt-[104px] sm:px-6 sm:pt-[116px]"
-          id="menu-root"
-          data-initial-section="{{ $activeSection }}">
-
-        @forelse ($categories as $category)
-            {{-- Each section is a printed-menu panel: ornate frame, title inside. --}}
-            <section id="{{ $category->slug }}"
-                     class="section-anchor scroll-section mt-4 first:mt-0"
-                     data-section="{{ $category->slug }}"
-                     data-section-name="{{ $category->name }}"
-                     aria-labelledby="heading-{{ $category->slug }}">
-
-                <x-frame class="px-3 py-6 sm:px-6 sm:py-8">
-                    {{-- ─── Panel heading ────────────────────────────────── --}}
-                    <header class="reveal relative mb-5 text-center">
-                        <x-ornament.arabesque class="watermark" />
-
-                        <p class="mb-1.5 text-[0.6875rem] tracking-wide text-gold-400/80">
-                            {{ $category->subtitle ?? 'منوی کافه صاحبقرانیه' }}
-                        </p>
-
-                        <h2 id="heading-{{ $category->slug }}"
-                            class="gold-text inline-flex items-center gap-2 text-xl font-black sm:text-3xl">
-                            <x-icon.section :category="$category" class="heading-glyph" />
-                            {{ $category->name }}
-                        </h2>
-
-                        @if ($category->latin_name)
-                            <p class="latin mt-1.5 text-[0.5625rem] text-gold-300/70 sm:text-[0.625rem]" dir="ltr">
-                                {{ $category->latin_name }}
-                            </p>
-                        @endif
-
-                        <x-ornament.divider class="mx-auto mt-3 max-w-[14rem] sm:max-w-sm" />
-
-                        @if ($category->description)
-                            <p class="mx-auto mt-3 max-w-md text-[0.75rem] leading-relaxed text-cream-dim sm:text-[0.8125rem]">
-                                {{ $category->description }}
-                            </p>
-                        @endif
+                    <header class="qr-section__heading reveal">
+                        <x-icon.section :category="$category" class="qr-section__glyph" />
+                        <div class="min-w-0">
+                            <h2 id="heading-{{ $category->slug }}">{{ $category->name }}</h2>
+                            @if ($category->subtitle)
+                                <p>{{ $category->subtitle }}</p>
+                            @endif
+                        </div>
                     </header>
 
-                    {{-- ─── Items ────────────────────────────────────────── --}}
-                    @if ($category->activeProducts->isEmpty())
-                        <p class="py-6 text-center text-xs text-cream-dim">این بخش به‌زودی تکمیل می‌شود.</p>
+                    @if ($category->description)
+                        <p class="mb-3 text-xs leading-7 text-stone-500">{{ $category->description }}</p>
+                    @endif
 
-                    @elseif ($category->usesGrid())
-                        <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3.5 lg:grid-cols-4">
+                    @if ($category->activeProducts->isEmpty())
+                        <div class="qr-product block text-center text-xs text-stone-500">
+                            این بخش به‌زودی تکمیل می‌شود.
+                        </div>
+                    @else
+                        <div class="qr-items">
                             @foreach ($category->activeProducts as $product)
                                 <x-product-card :product="$product" :category="$category" :index="$loop->iteration" />
                             @endforeach
                         </div>
 
-                    @else
-                        <p class="mb-3.5 text-center text-xs font-bold text-gold-200">طعم‌های قلیان</p>
+                        @if ($category->price && $category->isHookah())
+                            <div class="qr-service">
+                                <span class="text-xs text-stone-500">{{ $category->price_note ?? 'قیمت' }}</span>
+                                <strong class="mr-2 text-sm text-stone-800">@price($category->price)</strong>
+                                <span class="text-[10px] text-stone-400">تومان</span>
+                            </div>
+                        @endif
 
-                        <ul class="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2.5">
-                            @foreach ($category->activeProducts as $product)
-                                <x-flavor-row :product="$product" :index="$loop->iteration" />
-                            @endforeach
-                        </ul>
-
-                        {{-- Service price for the whole section --}}
-                        <div class="service-price reveal mt-4">
-                            <span class="text-xs text-gold-200">{{ $category->price_note ?? 'قیمت' }}</span>
-                            @if ($category->price)
-                                <span class="price-value text-sm">@price($category->price)</span>
-                            @else
-                                <span class="text-[0.6875rem] text-cream-dim">در محل از پرسنل بپرسید</span>
-                            @endif
-                        </div>
-
-                        {{-- Extras bundled with the service (Super Deluxe) --}}
                         @if ($category->features->isNotEmpty())
-                            <div class="mt-5">
-                                <x-ornament.divider class="mb-3" />
-                                <p class="mb-3 text-center text-[0.6875rem] font-semibold text-gold-300">
-                                    همراه با این سرویس شامل
-                                </p>
-
-                                <div class="grid grid-cols-4 gap-2 sm:grid-cols-8">
+                            <div class="mt-3 rounded-xl border border-stone-200 bg-white p-3">
+                                <p class="mb-2 text-center text-[11px] font-bold text-stone-600">همراه با این سرویس</p>
+                                <div class="grid grid-cols-4 gap-2">
                                     @foreach ($category->features as $feature)
-                                        <div class="feature-pill reveal"
-                                             style="--reveal-delay: {{ $loop->iteration * 40 }}ms">
-                                            <x-icon.glyph :name="$feature->glyph" class="feature-glyph" />
-                                            <span class="feature-name">{{ $feature->name }}</span>
+                                        <div class="flex flex-col items-center gap-1 text-center">
+                                            <x-icon.glyph :name="$feature->glyph" class="h-5 w-5 text-stone-500" />
+                                            <span class="text-[9px] text-stone-500">{{ $feature->name }}</span>
                                         </div>
                                     @endforeach
                                 </div>
                             </div>
                         @endif
                     @endif
-                </x-frame>
-            </section>
-        @empty
-            <x-frame class="px-6 py-12 text-center">
-                <p class="text-sm text-cream-dim">منو در حال آماده‌سازی است.</p>
-            </x-frame>
-        @endforelse
-    </main>
+                </section>
+            @empty
+                <div class="qr-product block py-12 text-center text-xs text-stone-500">
+                    منو در حال آماده‌سازی است.
+                </div>
+            @endforelse
+        </main>
+
+        <footer class="qr-footer">{{ $cafeName }}</footer>
+    </div>
 </x-layouts.app>
