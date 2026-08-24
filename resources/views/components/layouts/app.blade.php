@@ -11,14 +11,12 @@
 
     <title>{{ $title ? $title.' | کافه صاحبقرانیه' : 'کافه صاحبقرانیه' }}</title>
 
-    {{-- Theme before first paint: dark unless the visitor chose light. Inline on
-         purpose — the bundle is deferred, which would flash the wrong palette. --}}
     <script>
         (function () {
             var theme = 'dark';
             try {
                 if (localStorage.getItem('sg-theme') === 'light') theme = 'light';
-            } catch (e) { /* private mode: stay on the house theme */ }
+            } catch (e) {}
 
             document.documentElement.dataset.theme = theme;
             document.querySelector('meta[name="theme-color"]')
@@ -30,10 +28,9 @@
           crossorigin>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/css/admin.css', 'resources/css/menu-redesign.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-dvh antialiased">
-    {{-- Loading veil: emblem inside spinning gold rings, lifted on window load. --}}
     <div class="preloader" id="preloader" role="status" aria-live="polite">
         <div class="flex flex-col items-center gap-3">
             <div class="preloader-ring">
@@ -50,7 +47,6 @@
     {{ $slot }}
 
     <x-site-footer />
-
     <x-theme-toggle />
 
     <button type="button" class="to-top" id="to-top" aria-label="بازگشت به بالا">
