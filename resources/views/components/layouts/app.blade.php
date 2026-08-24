@@ -46,11 +46,13 @@
 
     {{ $slot }}
 
-    <x-site-footer />
-    <x-theme-toggle />
+    @if ($title !== 'منو')
+        <x-site-footer />
+        <x-theme-toggle />
 
-    <button type="button" class="to-top" id="to-top" aria-label="بازگشت به بالا">
-        <x-icon.chevron dir="up" class="h-5 w-5" />
-    </button>
+        <button type="button" class="to-top" id="to-top" aria-label="بازگشت به بالا">
+            <x-icon.chevron dir="up" class="h-5 w-5" />
+        </button>
+    @endif
 </body>
 </html>
